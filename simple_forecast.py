@@ -1,3 +1,4 @@
+import pprint
 import warnings
 from collections import defaultdict
 
@@ -15,51 +16,57 @@ warnings.filterwarnings("ignore")
 
 
 def simple_forecast():
-    # Loads dataset into pandas DataFrame
+    # サンプルデータの用意
     dl = DataLoader()
     df = dl.load_peyton_manning()
 
-    # specify dataset information
-    metadata = MetadataParam(
-        time_col="ts",  # name of the time column ("date" in example above)
-        # name of the value column ("sessions" in example above)
-        value_col="y",
-        freq="D"  # "H" for hourly, "D" for daily, "W" for weekly, etc.
-                  # Any format accepted by `pandas.date_range`
-    )
+    # データの情報を指定
+    # freq設定; 時間: H, 日: D, 週: W
+    metadata = MetadataParam(time_col="ts", value_col="y", freq="D")
 
-    # Creates forecasts and stores the result
+    # 予測器
     forecaster = Forecaster()
-    # result is also stored as `forecaster.forecast_result`.
+
+    # 予測結果の保存先
     result = forecaster.run_forecast_config(
         df=df,
         config=ForecastConfig(
             model_template=ModelTemplateEnum.SILVERKITE.name,
-            forecast_horizon=365,  # forecasts 365 steps ahead
-            coverage=0.95,         # 95% prediction intervals
+            forecast_horizon=365,  # 365 ステップ
+            coverage=0.95,         # 予測
             metadata_param=metadata
         )
     )
+
+    # 時系列データのプロット
     ts = result.timeseries
     fig = ts.plot()
     fig.write_html('forecast_plot.html')
 
+    # グリッドサーチ
     grid_search = result.grid_search
     cv_results = summarize_grid_search_results(
-        grid_search=grid_search,
-        decimals=2,
-        # The below saves space in the printed output.
-        # Remove to show all available metrics and columns.
-        cv_report_metrics=None,
+        grid_search=grid_search, decimals=2, cv_report_metrics=None,
         column_order=[
             "rank", "mean_test", "split_test", "mean_train", "split_train",
             "mean_fit_time", "mean_score_time", "params"
         ]
     )
-    # Transposes to save space in the printed output
     cv_results["params"] = cv_results["params"].astype(str)
     cv_results.set_index("params", drop=True, inplace=True)
     cv_results.transpose()
+    cv_results.to_csv('cv_results.csv')
+
+    backtest = result.backtest
+    fig = backtest.plot()
+    fig.write_html('backtest_plot.html')
+
+    backtest_eval = defaultdict(list)
+    for metric, value in backtest.train_evaluation.items():
+        backtest_eval[metric].append(value)
+        backtest_eval[metric].append(backtest.test_evaluation[metric])
+    metrics = pd.DataFrame(backtest_eval, index=["train", "test"]).T
+    metrics.to_csv('metrics.csv')
 
 
 if __name__ == '__main__':
