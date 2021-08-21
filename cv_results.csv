@@ -1,2 +1,2 @@
 params,rank_test_MAPE,mean_test_MAPE,split_test_MAPE,mean_train_MAPE,split_train_MAPE,mean_fit_time,mean_score_time
-[],1,7.31,"(5.01, 8.53, 8.39)",4.2,"(3.82, 4.25, 4.54)",7.68,0.5
+[],1,7.31,"(5.01, 8.53, 8.39)",4.2,"(3.82, 4.25, 4.54)",6.83,0.49

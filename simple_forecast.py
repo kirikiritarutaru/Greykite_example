@@ -57,6 +57,12 @@ def simple_forecast():
     cv_results.transpose()
     cv_results.to_csv('cv_results.csv')
 
+    # 各要素(トレンド、周期性、イベント効果)に分解して可視化
+    frc = result.forecast
+    fig = frc.plot_components()
+    fig.write_html('components.html')
+
+    # backtest
     backtest = result.backtest
     fig = backtest.plot()
     fig.write_html('backtest_plot.html')
