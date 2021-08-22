@@ -74,6 +74,13 @@ def simple_forecast():
     metrics = pd.DataFrame(backtest_eval, index=["train", "test"]).T
     metrics.to_csv('metrics.csv')
 
+    summary = result.model[-1].summary()
+    print(summary)
+
+    model = result.model
+    print('model:')
+    print(model)
+
 
 if __name__ == '__main__':
     simple_forecast()
