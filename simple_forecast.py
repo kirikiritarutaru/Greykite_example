@@ -1,9 +1,8 @@
-import pprint
 import warnings
 from collections import defaultdict
+from pathlib import Path
 
 import pandas as pd
-import plotly
 from greykite.common.data_loader import DataLoader
 from greykite.framework.templates.autogen.forecast_config import (
     ForecastConfig, MetadataParam)
@@ -13,6 +12,9 @@ from greykite.framework.utils.result_summary import \
     summarize_grid_search_results
 
 warnings.filterwarnings("ignore")
+
+sf_dir = Path('simple_forecast_plots')
+sf_dir.mkdir(parents=True, exist_ok=True)
 
 
 def simple_forecast():
@@ -41,7 +43,7 @@ def simple_forecast():
     # 時系列データのプロット
     ts = result.timeseries
     fig = ts.plot()
-    fig.write_html('forecast_plot.html')
+    fig.write_html(str(sf_dir / 'forecast_plot.html'))
 
     # グリッドサーチ
     grid_search = result.grid_search
@@ -55,24 +57,24 @@ def simple_forecast():
     cv_results["params"] = cv_results["params"].astype(str)
     cv_results.set_index("params", drop=True, inplace=True)
     cv_results.transpose()
-    cv_results.to_csv('cv_results.csv')
+    cv_results.to_csv(str(sf_dir / 'cv_results.csv'))
 
     # 各要素(トレンド、周期性、イベント効果)に分解して可視化
     frc = result.forecast
     fig = frc.plot_components()
-    fig.write_html('components.html')
+    fig.write_html(str(sf_dir / 'components.html'))
 
     # backtest
     backtest = result.backtest
     fig = backtest.plot()
-    fig.write_html('backtest_plot.html')
+    fig.write_html(str(sf_dir / 'backtest_plot.html'))
 
     backtest_eval = defaultdict(list)
     for metric, value in backtest.train_evaluation.items():
         backtest_eval[metric].append(value)
         backtest_eval[metric].append(backtest.test_evaluation[metric])
     metrics = pd.DataFrame(backtest_eval, index=["train", "test"]).T
-    metrics.to_csv('metrics.csv')
+    metrics.to_csv(str(sf_dir / 'metrics.csv'))
 
     summary = result.model[-1].summary()
     print(summary)
